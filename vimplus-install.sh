@@ -132,10 +132,8 @@ function compile_vim_on_ubuntu()
     # sudo apt-get install -y libncurses5-dev libncurses5 libgnome2-dev libgnomeui-dev \
     #     libgtk2.0-dev libatk1.0-dev libbonoboui2-dev \
     #     libcairo2-dev libx11-dev libxpm-dev libxt-dev python-dev python3-dev ruby-dev lua5.1 lua5.1-dev
-
-    rm -rf ~/vim82
-    git clone https://gitee.com/chxuan/vim82.git ~/vim82
-    cd ~/vim82
+    git clone https://gitee.com/chxuan/vim82.git /tmp/vim82
+    cd /tmp/vim82
     ./configure --with-features=huge \
         --enable-multibyte \
         --enable-rubyinterp \
@@ -144,9 +142,10 @@ function compile_vim_on_ubuntu()
         --enable-luainterp \
         --enable-gui=gtk2 \
         --enable-cscope \
-        --prefix=~/.local/vim82
-    make && make install && echo "PATH=~/.local/vim82/bin:\$PATH" >> ~/.local/env.sh && source ~/.local/env.sh
+        --prefix=/${HOME}/.local/vim82
+    make -j`nproc` && make -j`nproc` install && echo "export PATH=${HOME}/.local/vim82/bin:\$PATH" >> ${HOME}/.local/env.sh && source ${HOME}/.local/env.sh
     cd -
+    rm -rf /tmp/vim82
 }
 
 # 安装ubuntu必备软件

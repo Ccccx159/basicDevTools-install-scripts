@@ -32,10 +32,43 @@ if [[ "$USER_NAME" == "root" ]]; then
   exit 1
 fi
 
+# 比较两个版本号的大小
+# 返回值：0 表示两个版本号相等，1 表示 $1 大于 $2，-1 表示 $1 小于 $2
+function version_compare() {
+  local v1=$1
+  local v2=$2
+  local IFS=.
+  local i ver1=($v1) ver2=($v2)
+  # 比较主版本号、次版本号、修订版本号
+  for i in 0 1 2; do
+      if [[ -z ${ver1[i]} ]]; then
+        # 如果 $1 的版本号位数不足 $2，则 $1 小于 $2
+        echo "-1"
+        exit 0
+      elif [[ -z ${ver2[i]} ]]; then
+        # 如果 $2 的版本号位数不足 $1，则 $1 大于 $2
+        echo "1"
+        exit 0
+      elif (( 10#${ver1[i]} > 10#${ver2[i]} )); then
+        # 如果 $1 的当前版本号大于 $2，则 $1 大于 $2
+        echo "1"
+        exit 0
+      elif (( 10#${ver1[i]} < 10#${ver2[i]} )); then
+        # 如果 $1 的当前版本号小于 $2，则 $1 小于 $2
+        echo "-1"
+        exit 0
+      fi
+  done
+  # 如果 $1 和 $2 的版本号相等，则返回 0
+  echo "0"
+  exit 0
+}
+
 # 源码编译安装cmake
-version=$(curl -fsSL https://cmake.org/download/ | grep "Latest Release" | grep -oE "[0-9]*\.[0-9]*\.[0-9]*")
+cm_version=$(curl -fsSL https://cmake.org/download/ | grep "Latest Release" | grep -oE "[0-9]*\.[0-9]*\.[0-9]*")
+cur_cm_version=$(cmake --version | grep -oE "[0-9]*\.[0-9]*\.[0-9]*")
 # 如果cmake不存在，或者当前版本小于最新版本，则安装cmake
-if [[ ! -x "$(command -v cmake)" ]] || [[ "$(cmake --version | grep -oE "[0-9]*\.[0-9]*\.[0-9]*")" < "${version}" ]]; then
+if [[ ! -x "$(command -v cmake)" ]] || [[ "$(version_compare ${cur_cm_version} ${cm_version})" -eq "-1" ]]; then
   echo "cmake is not installed or version is lower than ${version}, install cmake now"
   mkdir -p /tmp/cmake && cd /tmp/cmake && wget --no-check-certificate https://github.com/Kitware/CMake/releases/download/v${version}/cmake-${version}.tar.gz
   tar -xzvf cmake-${version}.tar.gz && cd cmake-${version}
@@ -70,7 +103,8 @@ fi
 
 # 源码编译安装python
 py_verison=$(curl -fsSL https://www.python.org/ | grep -i 'latest' | grep -oE "[0-9]*\.[0-9]*\.[0-9]*")
-if [[ ! -x $(command -v python3) ]] || [[ "$(python3 --version | grep -oE "[0-9]*\.[0-9]*\.[0-9]*")" < "${py_verison}" ]]; then
+cur_py_version=$(python3 --version | grep -oE "[0-9]*\.[0-9]*\.[0-9]*")
+if [[ ! -x $(command -v python3) ]] || [[ "$(version_compare "${cur_py_version}" "${py_verison}")" -eq "-1" ]]; then
   echo "python3 is not installed or version is lower than ${py_verison}, install python3 now"
   mkdir -p /tmp/python3 && cd /tmp/python3
   curl -O https://www.python.org/ftp/python/${py_verison}/Python-${py_verison}.tgz
@@ -85,7 +119,7 @@ if [[ ! -x $(command -v python3) ]] || [[ "$(python3 --version | grep -oE "[0-9]
   fi
   cd ${script_path} && rm -rf /tmp/python3
 else
-  echo "python3 is already installed and version is higher than ${py_verison}, skip install python3"
+  echo "python3(${cur_py_version}) is already installed and version is higher than ${py_verison}, skip install python3"
 fi
 
 # 源码编译安装vim-plus
@@ -120,12 +154,28 @@ fi
 # 将环境设置写入到 .bashrc 文件中，启动终端时自动加载
 if [[ -f "${HOME}/.local/env.sh" ]]; then
   if [[ -f "${HOME}/.zshrc" ]]; then
-    echo "zsh" >> ${HOME}/.profile
-    echo "source ${HOME}/.local/env.sh" >> ${HOME}/.zshrc
+    if grep -q "zsh" ${HOME}/.profile; then
+      echo "zsh is already set as default shell, skip set zsh as default shell"
+    else
+      echo "zsh" >> ${HOME}/.profile
+    fi
+    if grep -q ".local/env.sh" ${HOME}/.zshrc; then
+      echo "env.sh is already loaded in .zshrc, skip load env.sh in .zshrc"
+    else
+      echo "source ${HOME}/.local/env.sh" >> ${HOME}/.zshrc
+    fi
   elif [[ -f "${HOME}/.bashrc" ]]; then
-    echo "source ${HOME}/.local/env.sh" >> ${HOME}/.bashrc
+    if grep -q ".local/env.sh" ${HOME}/.bashrc; then
+      echo "env.sh is already loaded in .bashrc, skip load env.sh in .bashrc"
+    else
+      echo "source ${HOME}/.local/env.sh" >> ${HOME}/.bashrc
+    fi
   else
-    echo "source ${HOME}/.local/env.sh" >> ${HOME}/.profile
+    if grep -q ".local/env.sh" ${HOME}/.profile; then
+      echo "env.sh is already loaded in .profile, skip load env.sh in .profile"
+    else
+      echo "source ${HOME}/.local/env.sh" >> ${HOME}/.profile
+    fi
   fi
 fi
 
