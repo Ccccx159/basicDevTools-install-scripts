@@ -27,7 +27,7 @@ script_path=$(dirname $(readlink -f $0))
 # fi
 
 USER_NAME=$(whoami)
-if [[ "$USER_NAME" == "root" ]]; thenzsh
+if [[ "$USER_NAME" == "root" ]]; then
   echo "current user is root, please run this script with non-root user"
   exit 1
 fi
