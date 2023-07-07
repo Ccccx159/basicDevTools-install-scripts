@@ -325,4 +325,7 @@ function main()
 }
 
 # 调用main函数
+source ${HOME}/.local/env.sh
+echo "python version: "$(python3 --version)
+echo "cmake  version: "$(cmake --version)
 main

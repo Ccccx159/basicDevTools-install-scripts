@@ -70,8 +70,8 @@ cur_cm_version=$(cmake --version | grep -oE "[0-9]*\.[0-9]*\.[0-9]*")
 # 如果cmake不存在，或者当前版本小于最新版本，则安装cmake
 if [[ ! -x "$(command -v cmake)" ]] || [[ "$(version_compare ${cur_cm_version} ${cm_version})" -eq "-1" ]]; then
   echo "cmake is not installed or version is lower than ${version}, install cmake now"
-  mkdir -p /tmp/cmake && cd /tmp/cmake && wget --no-check-certificate https://github.com/Kitware/CMake/releases/download/v${version}/cmake-${version}.tar.gz
-  tar -xzvf cmake-${version}.tar.gz && cd cmake-${version}
+  mkdir -p /tmp/cmake && cd /tmp/cmake && wget --no-check-certificate https://github.com/Kitware/CMake/releases/download/v${cm_version}/cmake-${cm_version}.tar.gz
+  tar -xzvf cmake-${cm_version}.tar.gz && cd cmake-${cm_version}
   ./configure --prefix=${HOME}/.local/cmake && make -j`nproc` && make install -j`nproc`
   if [[ "$?" -ne "0" ]]; then
     echo "cmake install failed, please check the error message" >> ${script_path}/error.log
@@ -81,7 +81,7 @@ if [[ ! -x "$(command -v cmake)" ]] || [[ "$(version_compare ${cur_cm_version} $
     cd ${script_path} && rm -rf /tmp/cmake
   fi
 else
-  echo "cmake is already installed and version is higher than ${version}, skip install cmake"
+  echo "cmake is already installed and version is higher than ${cm_version}, skip install cmake"
 fi
 
 # 编译安装 openssl
@@ -149,6 +149,31 @@ else
   echo "source ${HOME}/.oh-my-zsh/.keybind.zsh" >> ${HOME}/.local/env.sh 
 fi
 
+# 安装 code-server
+if [[ -x $(command -v code-server) ]]; then
+  echo "code-server is already installed, skip install code-server"
+else
+  echo "code-server is not installed, install code-server now"
+  cs_version=$(curl -fsSL https://code-server.dev/install.sh | sh -s -- --dry-run | grep -oE 'code-server_[0-9]*\.[0-9]*\.[0-9]*' | grep --max-count=1 -oE '[0-9]*\.[0-9]*\.[0-9]*')
+  echo "code-server version is ${cs_version}"
+  echo "download binary file from https://github.com/coder/code-server/releases/download/v${cs_version}/code-server_${cs_version}_amd64.deb"
+  mkdir -p /tmp/code-server && cd /tmp/code-server
+  curl -fLO https://github.com/coder/code-server/releases/download/v${cs_version}/code-server_${cs_version}_amd64.deb
+  echo $1 | sudo -S dpkg -i code-server_${cs_version}_amd64.deb
+  if [[ "$(ps -p 1 -o comm=)" == "systemd" ]]; then
+    echo $1 | sudo -S systemctl enable --now code-server@$USER
+    if [[ $(systemctl status code-server@$USER | awk '$2 ~ /active/ && $3 ~ /running/ {print "Success"}') != "Success" ]]; then
+      echo "E: code-server start failed, please check the error message"
+    else
+      echo "code-server start success"
+    fi
+  else
+    echo "No systemd, skip enable code-server service"
+    echo "You need to start code-server manually"
+  fi
+  
+  rm -rf /tmp/code-server
+fi
 
 
 # 将环境设置写入到 .bashrc 文件中，启动终端时自动加载
