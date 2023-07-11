@@ -7,11 +7,11 @@ script_path=$(dirname $(readlink -f $0))
   echo $1 | sudo -S cp /etc/apt/sources.list /etc/apt/sources.list.bak
   echo $1 | sudo -S sed -i 's/[a-zA-Z0-9.]*\.*archive.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list
   echo $1 | sudo -S sed -i 's/[a-zA-Z0-9.]*\.*security.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list
-  echo $1 | sudo -S apt-get update -y && apt-get upgrade -y
+  echo $1 | sudo -S apt-get update -y 
+  echo $1 | sudo -S apt-get upgrade -y
 
   # 优先安装 tzdata，避免安装过程中出现交互式配置时阻塞
-  echo $1 | sudo -S export DEBIAN_FRONTEND=noninteractive
-  echo $1 | sudo -S apt-get install -y tzdata
+  echo $1 | sudo -S DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
   echo $1 | sudo -S ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
   # 安装常用开发软件和部分常见依赖模块
