@@ -10,7 +10,7 @@ script_path=$(dirname $(readlink -f $0))
   echo $1 | sudo -S apt-get update -y && apt-get upgrade -y
 
   # 优先安装 tzdata，避免安装过程中出现交互式配置时阻塞
-  export DEBIAN_FRONTEND=noninteractive
+  echo $1 | sudo -S export DEBIAN_FRONTEND=noninteractive
   echo $1 | sudo -S apt-get install -y tzdata
   echo $1 | sudo -S ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
