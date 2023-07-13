@@ -129,19 +129,11 @@ function get_ubuntu_version()
 # 在ubuntu上源代码安装vim
 function compile_vim_on_ubuntu()
 {
-    # 编译 vim 支持 python3，由于 configure 将 python3 的 configuration 目录作为 python 动态库的链接目录，导致 vim 链接了静态库，编译不会报错
-    # 但是在后续执行 vim 时，YouCompleteMe 插件会提示 python 的一个依赖库找不到符号，因此需要手动将当前 python3 的动态库拷贝到 configuration 目录下
-    # py_dll=$(ldd $(command -v python3) | grep -i "python3" | awk '{print $3}')
-    # py_dll_path=${py_dll%/*}
-    # py_conf_path=$(python3 -c 'import distutils.sysconfig; print(distutils.sysconfig.get_config_var("LIBPL"))')
-    # echo "python3 dll path: "$py_dll_path
-    # echo "python3 conf path: "$py_conf_path
-    # cp $py_dll_path/lib*.* $py_conf_path
     # sudo apt-get install -y libncurses5-dev libncurses5 libgnome2-dev libgnomeui-dev \
     #     libgtk2.0-dev libatk1.0-dev libbonoboui2-dev \
     #     libcairo2-dev libx11-dev libxpm-dev libxt-dev python-dev python3-dev ruby-dev lua5.1 lua5.1-dev
-    git clone https://gitee.com/chxuan/vim82.git /tmp/vim82
-    cd /tmp/vim82
+    git clone https://github.com/vim/vim.git /tmp/vim
+    cd /tmp/vim
     sed -i 's/print(sys\.version\[\:[0-9]\])/major,minor=sys\.version_info\[\:2\];print(f"{major}.{minor}")/' src/auto/configure
     LDFLAGS="-rdynamic" ./configure --with-features=huge \
         --enable-multibyte \
@@ -154,7 +146,7 @@ function compile_vim_on_ubuntu()
         --prefix=/${HOME}/.local/vim82
     make -j`nproc` && make -j`nproc` install && echo "export PATH=${HOME}/.local/vim82/bin:\$PATH" >> ${HOME}/.local/env.sh && source ${HOME}/.local/env.sh
     cd -
-    # rm -rf /tmp/vim82
+    rm -rf /tmp/vim
 }
 
 # 安装ubuntu必备软件
