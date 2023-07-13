@@ -132,7 +132,7 @@ else
     log Error "openssl download failed, please check the error message"
     exit 1
   fi
-  cd openssl
+  cd /tmp/openssl
   ssl_version=$(git tag | grep -E "[0-9]*\.[0-9]*\.[0-9]*" | sort -r | head -n 1)
   log Info "openssl latest version is ${ssl_version}"
   log Info "openssl install path is ${HOME}/.local/openssl"
@@ -174,8 +174,8 @@ if [[ ! -x $(command -v python3) ]] || [[ "$(version_compare "${cur_py_version}"
     log Error "python3 download failed, please check the error message"
     exit 1
   fi
-  (tar -xzvf Python-${py_verison}.tgz && cd Python-${py_verison}) | tee -a ${script_path}/PYTHON3.log
-  (./configure --prefix=${HOME}/.local/python3 --enable-shared --disable-test-modules && make -j`nproc` && make install -j`nproc`) | tee -a ${script_path}/PYTHON3.log
+  (tar -xzvf Python-${py_verison}.tgz && cd Python-${py_verison} && \
+    ./configure --prefix=${HOME}/.local/python3 --enable-shared --disable-test-modules && make -j`nproc` && make install -j`nproc`) | tee -a ${script_path}/PYTHON3.log
   if [[ "$?" -ne "0" ]]; then
     log Error "python3 install failed, please check the error message"
     exit 1
